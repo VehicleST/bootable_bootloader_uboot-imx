@@ -321,12 +321,7 @@ static iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_SD3_DAT1__SD3_DATA1	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT2__SD3_DATA2	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT3__SD3_DATA3	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT4__SD3_DATA4	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT5__SD3_DATA5	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT6__SD3_DATA6	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT7__SD3_DATA7	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_GPIO_18__SD3_VSELECT | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_NANDF_CS2__GPIO6_IO15   | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static void setup_iomux_uart(void)
@@ -337,11 +332,10 @@ static void setup_iomux_uart(void)
 #ifdef CONFIG_FSL_ESDHC
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(1, 1)
-#define USDHC3_CD_GPIO	IMX_GPIO_NR(6, 15)
 
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC1_BASE_ADDR, 0, 4},
-	{USDHC3_BASE_ADDR},
+	{USDHC3_BASE_ADDR, 0, 4},
 };
 
 int board_mmc_get_env_dev(int devno)
@@ -375,8 +369,7 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = !gpio_get_value(USDHC1_CD_GPIO);
 		break;
 	case USDHC3_BASE_ADDR:
-		gpio_direction_input(USDHC3_CD_GPIO);
-		ret = !gpio_get_value(USDHC3_CD_GPIO);
+		ret = 1; /* sd-card/uSDHC3 is always present */
 		break;
 	}
 
@@ -405,8 +398,7 @@ int board_mmc_init(bd_t *bis)
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
-			gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
-			gpio_direction_input(USDHC3_CD_GPIO);
+			usdhc_cfg[1].max_bus_width = 4;
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
 		default:
