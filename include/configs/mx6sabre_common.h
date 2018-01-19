@@ -21,6 +21,7 @@
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
 
+#ifndef CONFIG_TARGET_MX6QSABREAUTO
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
@@ -34,6 +35,7 @@
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
+#endif
 
 #ifdef CONFIG_MX6S
 #define SYS_NOSMP "nosmp"
