@@ -152,12 +152,9 @@ static struct i2c_pads_info i2c_pad_info2 = {
 #endif
 #endif
 
-static iomux_v3_cfg_t const i2c3_pads[] = {
-	MX6_PAD_EIM_A24__GPIO5_IO04		| MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
+/* I2C port expander RESET PIN */
 static iomux_v3_cfg_t const port_exp[] = {
-	MX6_PAD_SD2_DAT0__GPIO1_IO15		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_EIM_DA14__GPIO3_IO14		| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 #ifdef CONFIG_PCA953X
@@ -698,8 +695,6 @@ iomux_v3_cfg_t const ecspi1_pads[] = {
 	MX6_PAD_EIM_D17__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
 	MX6_PAD_EIM_D18__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
 	MX6_PAD_EIM_D19__GPIO3_IO19  | MUX_PAD_CTRL(NO_PAD_CTRL),
-	/* Steer logic */
-	MX6_PAD_EIM_A24__GPIO5_IO04  | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 void setup_spinor(void)
@@ -825,13 +820,9 @@ int board_init(void)
 #endif
 #endif
 
-	/* I2C 3 Steer */
-	gpio_request(IMX_GPIO_NR(5, 4), "steer logic");
-	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
-	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
-
-	gpio_request(IMX_GPIO_NR(1, 15), "expander en");
-	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);
+	/* I2C port expander RESET PIN */
+	gpio_request(IMX_GPIO_NR(3, 14), "expander en");
+	gpio_direction_output(IMX_GPIO_NR(3, 14), 1);
 	imx_iomux_v3_setup_multiple_pads(port_exp, ARRAY_SIZE(port_exp));
 
 #ifdef CONFIG_VIDEO_IPUV3
