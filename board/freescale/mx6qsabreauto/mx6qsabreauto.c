@@ -136,6 +136,12 @@ static iomux_v3_cfg_t const port_exp[] = {
 	MX6_PAD_EIM_DA14__GPIO3_IO14		| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
+/*LVDS */
+static iomux_v3_cfg_t const lvds_display_pads[] = {
+	MX6_PAD_GPIO_18__GPIO7_IO13 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO_19__GPIO4_IO05 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
 #ifdef CONFIG_PCA953X
 
 /*Define for building port exp gpio, pin starts from 0*/
@@ -479,19 +485,19 @@ static void do_enable_hdmi(struct display_info_t const *dev)
 struct display_info_t const displays[] = {{
 	.bus	= -1,
 	.addr	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= NULL,
 	.enable	= NULL,
 	.mode	= {
-		.name           = "Hannstar-XGA",
+		.name           = "Displaytech-XGA",
 		.refresh        = 60,
 		.xres           = 1024,
-		.yres           = 768,
-		.pixclock       = 15385,
+		.yres           = 600,
+		.pixclock       = 19531,
 		.left_margin    = 220,
 		.right_margin   = 40,
-		.upper_margin   = 21,
-		.lower_margin   = 7,
+		.upper_margin   = 20,
+		.lower_margin   = 5,
 		.hsync_len      = 60,
 		.vsync_len      = 10,
 		.sync           = FB_SYNC_EXT,
@@ -519,7 +525,7 @@ struct display_info_t const displays[] = {{
 } } };
 size_t display_count = ARRAY_SIZE(displays);
 
-iomux_v3_cfg_t const backlight_pads[] = {
+/*iomux_v3_cfg_t const backlight_pads[] = {
 	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 };
 
@@ -529,6 +535,25 @@ static void setup_iomux_backlight(void)
 	gpio_direction_output(IMX_GPIO_NR(2, 9), 1);
 	imx_iomux_v3_setup_multiple_pads(backlight_pads,
 					 ARRAY_SIZE(backlight_pads));
+}*/
+
+static void i2c_power_seq(void)
+{
+	setenv("i2c_set_port", "i2c dev 2");
+	setenv("i2c_set_expander", "i2c mw 30 1 3b 1");
+	setenv("i2c_set_expander_as_output", "i2c mw 30 3 00 1");
+	setenv("i2c_enable_AVDD_and_VGL", "i2c mw 30 1 b9 1");
+	setenv("i2c_enable_VGH", "i2c mw 30 1 f9 1");
+	setenv("i2c_enable_led_backlight", "i2c mw 30 1 fd 1");
+	// setenv("setting_GPIO7_13_enable", "mw 20e0250 00000015 1");
+	// setenv("enabling_the_display", "gpio set gpio7_13");
+	// setenv("setting_GPIO4_05_enable", "mw 20e0254 00000015 1");
+	// setenv("wake_display_from_standby", "gpio set gpio4_05");
+	setenv("display_powerup", "run i2c_set_port i2c_set_expander i2c_set_expander_as_output i2c_enable_AVDD_and_VGL i2c_enable_VGH i2c_enable_led_backlight");
+	// setenv("enable_display", "run setting_GPIO7_13_enable enabling_the_display");
+	// setenv("wake_display", "run setting_GPIO4_05_enable wake_display_from_standby");
+	setenv("boot", "boota mmc1");
+	setenv("bootcmd", "run display_powerup boot");
 }
 
 static void setup_display(void)
@@ -537,7 +562,7 @@ static void setup_display(void)
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	int reg;
 
-	setup_iomux_backlight();
+	// setup_iomux_backlight();
 	enable_ipu_clock();
 	imx_setup_hdmi();
 
@@ -733,6 +758,11 @@ int board_init(void)
 
 #ifdef CONFIG_VIDEO_IPUV3
 	setup_display();
+	imx_iomux_v3_setup_multiple_pads(lvds_display_pads, ARRAY_SIZE(lvds_display_pads));
+	gpio_request(IMX_GPIO_NR(7, 13), "display en");
+	gpio_direction_output(IMX_GPIO_NR(7, 13), 1);
+	gpio_request(IMX_GPIO_NR(4, 5), "display wake");
+	gpio_direction_output(IMX_GPIO_NR(4, 5), 1);
 #endif
 
 #ifdef CONFIG_MXC_SPI
@@ -1000,6 +1030,8 @@ int board_late_init(void)
 		setenv("board_rev", "MX6Q");
 	else if (is_mx6sdl())
 		setenv("board_rev", "MX6DL");
+	/* Display power-up sequence */
+	i2c_power_seq();
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_MMC
