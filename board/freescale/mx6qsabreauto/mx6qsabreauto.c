@@ -339,18 +339,14 @@ int board_mmc_get_env_dev(int devno)
 	 * need ubstract 1 to map to the mmc3 device id
 	 * see the comments in board_mmc_init function
 	 */
-	if (devno == 2)
-		devno--;
 
-	return devno;
+	return devno - 1;
 }
 
 int mmc_map_to_kernel_blk(int devno)
 {
-	if (devno == 1)
-		devno = 2;
 
-	return devno;
+	return devno + 1;
 }
 
 int board_mmc_getcd(struct mmc *mmc)
@@ -566,7 +562,7 @@ static void i2c_power_seq(void)
 	setenv("display_powerup", "run i2c_set_port i2c_set_expander i2c_set_expander_as_output i2c_enable_AVDD_and_VGL i2c_enable_VGH i2c_enable_led_backlight");
 	// setenv("enable_display", "run setting_GPIO7_13_enable enabling_the_display");
 	// setenv("wake_display", "run setting_GPIO4_05_enable wake_display_from_standby");
-	setenv("boot", "boota mmc1");
+	setenv("boot", "boota mmc0");
 	setenv("bootcmd", "run display_powerup boot");
 }
 
